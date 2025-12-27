@@ -2,13 +2,17 @@ import React, { useEffect, useRef } from "react";
 
 const Fireworks: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
-    if (!ctx) return; // 🔑 CRITICAL FIX (all TS errors solved)
+    if (!ctx) return;
+
+    // ✅ Store NON-NULL context in ref
+    ctxRef.current = ctx;
 
     let width = window.innerWidth;
     let height = window.innerHeight;
@@ -17,10 +21,11 @@ const Fireworks: React.FC = () => {
     canvas.height = height;
 
     const resize = () => {
+      if (!canvasRef.current || !ctxRef.current) return;
       width = window.innerWidth;
       height = window.innerHeight;
-      canvas.width = width;
-      canvas.height = height;
+      canvasRef.current.width = width;
+      canvasRef.current.height = height;
     };
 
     window.addEventListener("resize", resize);
@@ -40,13 +45,10 @@ const Fireworks: React.FC = () => {
       `hsl(${Math.floor(Math.random() * 360)}, 100%, 60%)`;
 
     const createFirework = () => {
-      const x = Math.random() * width;
-      const y = Math.random() * height * 0.5;
-
       for (let i = 0; i < 80; i++) {
         particles.push({
-          x,
-          y,
+          x: Math.random() * width,
+          y: Math.random() * height * 0.5,
           vx: (Math.random() - 0.5) * 6,
           vy: (Math.random() - 0.5) * 6,
           alpha: 1,
@@ -58,6 +60,9 @@ const Fireworks: React.FC = () => {
     let lastTime = 0;
 
     const animate = (time: number) => {
+      const ctx = ctxRef.current;
+      if (!ctx) return; // ✅ TS-safe
+
       if (time - lastTime > 700) {
         createFirework();
         lastTime = time;
@@ -93,6 +98,7 @@ const Fireworks: React.FC = () => {
 
     return () => {
       window.removeEventListener("resize", resize);
+      ctxRef.current = null;
     };
   }, []);
 
@@ -105,4 +111,5 @@ const Fireworks: React.FC = () => {
 };
 
 export default Fireworks;
+
 
