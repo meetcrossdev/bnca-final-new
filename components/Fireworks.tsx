@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import * as React from 'react';
+import { useEffect, useRef } from 'react';
 import { playFireworkPop } from '../services/audioService';
 
 interface FireworksProps {
@@ -7,7 +8,7 @@ interface FireworksProps {
 
 type ExplosionShape = 'sphere' | 'star' | 'ring' | 'sparkler';
 
-export const Fireworks: React.FC<FireworksProps> = ({ isSoundEnabled }) => {
+export const Fireworks = ({ isSoundEnabled }: FireworksProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
 
@@ -28,12 +29,12 @@ export const Fireworks: React.FC<FireworksProps> = ({ isSoundEnabled }) => {
     const rockets: Rocket[] = [];
 
     const colors = [
-      '#fbbf24', '#f59e0b', '#d97706', // Golds
-      '#a855f7', '#d946ef', '#8b5cf6', // Purples
-      '#06b6d4', '#22d3ee', '#67e8f9', // Cyans
-      '#ef4444', '#f43f5e',           // Reds
-      '#10b981', '#34d399',           // Greens
-      '#ffffff', '#f8fafc'            // Whites
+      '#fbbf24', '#f59e0b', '#d97706',
+      '#a855f7', '#d946ef', '#8b5cf6',
+      '#06b6d4', '#22d3ee', '#67e8f9',
+      '#ef4444', '#f43f5e',
+      '#10b981', '#34d399',
+      '#ffffff', '#f8fafc'
     ];
 
     class Rocket {
@@ -59,8 +60,7 @@ export const Fireworks: React.FC<FireworksProps> = ({ isSoundEnabled }) => {
       update() {
         this.x += this.vx;
         this.y += this.vy;
-        this.vy += 0.15; // Gravity
-
+        this.vy += 0.15;
         if (this.vy >= -1 && !this.exploded) {
           this.explode();
           return false;
@@ -105,15 +105,13 @@ export const Fireworks: React.FC<FireworksProps> = ({ isSoundEnabled }) => {
               }
             }
             break;
-
           case 'ring':
             for (let i = 0; i < 80; i++) {
               const angle = (i * Math.PI * 2) / 80;
-              const speed = 5 + Math.random() * 1;
+              const speed = 5 + Math.random();
               particles.push(new Particle(this.x, this.y, this.color, angle, speed));
             }
             break;
-
           case 'sparkler':
             for (let i = 0; i < baseCount; i++) {
               const angle = Math.random() * Math.PI * 2;
@@ -124,7 +122,6 @@ export const Fireworks: React.FC<FireworksProps> = ({ isSoundEnabled }) => {
               particles.push(p);
             }
             break;
-
           case 'sphere':
           default:
             for (let i = 0; i < baseCount; i++) {
@@ -205,7 +202,7 @@ export const Fireworks: React.FC<FireworksProps> = ({ isSoundEnabled }) => {
       const ctx = ctxRef.current;
       if (!ctx) return;
 
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.25)';
+      ctx.fillStyle = 'rgba(15,23,42,0.25)';
       ctx.fillRect(0, 0, width, height);
 
       if (frame % 35 === 0) rockets.push(new Rocket());
@@ -243,6 +240,7 @@ export const Fireworks: React.FC<FireworksProps> = ({ isSoundEnabled }) => {
 
   return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-0" />;
 };
+
 
 
 
