@@ -1,6 +1,13 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from 'react';
+import { playFireworkPop } from '../services/audioService';
 
-const Fireworks: React.FC = () => {
+interface FireworksProps {
+  isSoundEnabled?: boolean;
+}
+
+type ExplosionShape = 'sphere' | 'star' | 'ring' | 'sparkler';
+
+export const Fireworks: React.FC<FireworksProps> = ({ isSoundEnabled }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
 
@@ -8,11 +15,10 @@ const Fireworks: React.FC = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // ✅ Store NON-NULL context in ref
-    ctxRef.current = ctx;
+    ctxRef.current = ctx; // store in ref
 
     let width = window.innerWidth;
     let height = window.innerHeight;
@@ -20,96 +26,223 @@ const Fireworks: React.FC = () => {
     canvas.width = width;
     canvas.height = height;
 
-    const resize = () => {
-      if (!canvasRef.current || !ctxRef.current) return;
+    const handleResize = () => {
+      if (!canvasRef.current) return;
       width = window.innerWidth;
       height = window.innerHeight;
       canvasRef.current.width = width;
       canvasRef.current.height = height;
     };
 
-    window.addEventListener("resize", resize);
+    window.addEventListener('resize', handleResize);
 
-    interface Particle {
+    const particles: Particle[] = [];
+    const rockets: Rocket[] = [];
+
+    const colors = [
+      '#fbbf24', '#f59e0b', '#d97706', // Golds
+      '#a855f7', '#d946ef', '#8b5cf6', // Purples
+      '#06b6d4', '#22d3ee', '#67e8f9', // Cyans
+      '#ef4444', '#f43f5e',           // Reds
+      '#10b981', '#34d399',           // Greens
+      '#ffffff', '#f8fafc'            // Whites
+    ];
+
+    class Rocket {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      color: string;
+      exploded: boolean;
+      shape: ExplosionShape;
+
+      constructor() {
+        this.x = Math.random() * width;
+        this.y = height;
+        this.vx = (Math.random() - 0.5) * 4;
+        this.vy = -(Math.random() * 6 + 13);
+        this.color = colors[Math.floor(Math.random() * colors.length)];
+        this.exploded = false;
+        const shapes: ExplosionShape[] = ['sphere', 'star', 'ring', 'sparkler'];
+        this.shape = shapes[Math.floor(Math.random() * shapes.length)];
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += 0.15;
+
+        if (this.vy >= -1 && !this.exploded) {
+          this.explode();
+          return false;
+        }
+        return true;
+      }
+
+      draw() {
+        const ctx = ctxRef.current;
+        if (!ctx) return;
+
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = this.color;
+
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.x - this.vx * 2, this.y - this.vy * 2 + 5);
+        ctx.strokeStyle = `rgba(255,255,255,0.2)`;
+        ctx.stroke();
+
+        ctx.shadowBlur = 0;
+      }
+
+      explode() {
+        const ctx = ctxRef.current;
+        if (!ctx) return;
+
+        const baseCount = 100 + Math.random() * 50;
+
+        switch (this.shape) {
+          case 'star':
+            for (let i = 0; i < 5; i++) {
+              const angle = (i * Math.PI * 2) / 5;
+              for (let j = 0; j < 25; j++) {
+                const speed = (j / 25) * 8 + 2;
+                particles.push(new Particle(this.x, this.y, this.color, angle, speed));
+              }
+            }
+            break;
+          case 'ring':
+            for (let i = 0; i < 80; i++) {
+              const angle = (i * Math.PI * 2) / 80;
+              const speed = 5 + Math.random() * 1;
+              particles.push(new Particle(this.x, this.y, this.color, angle, speed));
+            }
+            break;
+          case 'sparkler':
+            for (let i = 0; i < baseCount; i++) {
+              const angle = Math.random() * Math.PI * 2;
+              const speed = Math.random() * 12 + 1;
+              const p = new Particle(this.x, this.y, this.color, angle, speed);
+              p.decay = 0.03;
+              p.gravity = 0.15;
+              particles.push(p);
+            }
+            break;
+          case 'sphere':
+          default:
+            for (let i = 0; i < baseCount; i++) {
+              const angle = Math.random() * Math.PI * 2;
+              const speed = Math.random() * 7 + 2;
+              particles.push(new Particle(this.x, this.y, this.color, angle, speed));
+            }
+            break;
+        }
+
+        if (isSoundEnabled) {
+          const pan = (this.x / width) * 2 - 1;
+          playFireworkPop(pan);
+        }
+
+        this.exploded = true;
+      }
+    }
+
+    class Particle {
       x: number;
       y: number;
       vx: number;
       vy: number;
       alpha: number;
       color: string;
+      decay: number;
+      gravity: number;
+      friction: number;
+
+      constructor(x: number, y: number, color: string, angle: number, speed: number) {
+        this.x = x;
+        this.y = y;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        this.alpha = 1;
+        this.color = color;
+        this.decay = Math.random() * 0.01 + 0.005;
+        this.gravity = 0.06;
+        this.friction = 0.96;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += this.gravity;
+        this.vx *= this.friction;
+        this.vy *= this.friction;
+        this.alpha -= this.decay;
+        return this.alpha > 0;
+      }
+
+      draw() {
+        const ctx = ctxRef.current;
+        if (!ctx) return;
+
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.beginPath();
+        const size = Math.random() * 1.5 + 1.5;
+        ctx.arc(this.x, this.y, size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        if (this.alpha > 0.5) {
+          ctx.shadowBlur = 5;
+          ctx.shadowColor = this.color;
+        }
+        ctx.fill();
+        ctx.restore();
+      }
     }
 
-    const particles: Particle[] = [];
+    let animationId: number;
+    let frame = 0;
 
-    const randomColor = () =>
-      `hsl(${Math.floor(Math.random() * 360)}, 100%, 60%)`;
-
-    const createFirework = () => {
-      for (let i = 0; i < 80; i++) {
-        particles.push({
-          x: Math.random() * width,
-          y: Math.random() * height * 0.5,
-          vx: (Math.random() - 0.5) * 6,
-          vy: (Math.random() - 0.5) * 6,
-          alpha: 1,
-          color: randomColor(),
-        });
-      }
-    };
-
-    let lastTime = 0;
-
-    const animate = (time: number) => {
+    const animate = () => {
       const ctx = ctxRef.current;
-      if (!ctx) return; // ✅ TS-safe
+      if (!ctx) return;
 
-      if (time - lastTime > 700) {
-        createFirework();
-        lastTime = time;
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.25)';
+      ctx.fillRect(0, 0, width, height);
+
+      if (frame % 35 === 0) rockets.push(new Rocket());
+      if (frame % 100 === 0 && Math.random() > 0.5) rockets.push(new Rocket());
+
+      for (let i = rockets.length - 1; i >= 0; i--) {
+        rockets[i].draw();
+        if (!rockets[i].update()) rockets.splice(i, 1);
       }
-
-      ctx.clearRect(0, 0, width, height);
 
       for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.03;
-        p.alpha -= 0.015;
-
-        if (p.alpha <= 0) {
-          particles.splice(i, 1);
-          continue;
-        }
-
-        ctx.globalAlpha = p.alpha;
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
-        ctx.fill();
+        particles[i].draw();
+        if (!particles[i].update()) particles.splice(i, 1);
       }
 
-      ctx.globalAlpha = 1;
-      requestAnimationFrame(animate);
+      frame++;
+      animationId = requestAnimationFrame(animate);
     };
 
-    requestAnimationFrame(animate);
+    animate();
 
     return () => {
-      window.removeEventListener("resize", resize);
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationId);
       ctxRef.current = null;
     };
-  }, []);
+  }, [isSoundEnabled]);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0"
-    />
-  );
+  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-0" />;
 };
 
-export default Fireworks;
 
 
