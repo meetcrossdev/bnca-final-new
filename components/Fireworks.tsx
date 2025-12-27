@@ -8,7 +8,7 @@ interface FireworksProps {
 type ExplosionShape = 'sphere' | 'star' | 'ring' | 'sparkler';
 
 export const Fireworks: React.FC<FireworksProps> = ({ isSoundEnabled }) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
 
   useEffect(() => {
@@ -17,24 +17,12 @@ export const Fireworks: React.FC<FireworksProps> = ({ isSoundEnabled }) => {
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
-    ctxRef.current = ctx; // store in ref
+    ctxRef.current = ctx;
 
     let width = window.innerWidth;
     let height = window.innerHeight;
-
     canvas.width = width;
     canvas.height = height;
-
-    const handleResize = () => {
-      if (!canvasRef.current) return;
-      width = window.innerWidth;
-      height = window.innerHeight;
-      canvasRef.current.width = width;
-      canvasRef.current.height = height;
-    };
-
-    window.addEventListener('resize', handleResize);
 
     const particles: Particle[] = [];
     const rockets: Rocket[] = [];
@@ -71,7 +59,7 @@ export const Fireworks: React.FC<FireworksProps> = ({ isSoundEnabled }) => {
       update() {
         this.x += this.vx;
         this.y += this.vy;
-        this.vy += 0.15;
+        this.vy += 0.15; // Gravity
 
         if (this.vy >= -1 && !this.exploded) {
           this.explode();
@@ -95,7 +83,7 @@ export const Fireworks: React.FC<FireworksProps> = ({ isSoundEnabled }) => {
         ctx.beginPath();
         ctx.moveTo(this.x, this.y);
         ctx.lineTo(this.x - this.vx * 2, this.y - this.vy * 2 + 5);
-        ctx.strokeStyle = `rgba(255,255,255,0.2)`;
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
         ctx.stroke();
 
         ctx.shadowBlur = 0;
@@ -117,6 +105,7 @@ export const Fireworks: React.FC<FireworksProps> = ({ isSoundEnabled }) => {
               }
             }
             break;
+
           case 'ring':
             for (let i = 0; i < 80; i++) {
               const angle = (i * Math.PI * 2) / 80;
@@ -124,6 +113,7 @@ export const Fireworks: React.FC<FireworksProps> = ({ isSoundEnabled }) => {
               particles.push(new Particle(this.x, this.y, this.color, angle, speed));
             }
             break;
+
           case 'sparkler':
             for (let i = 0; i < baseCount; i++) {
               const angle = Math.random() * Math.PI * 2;
@@ -134,6 +124,7 @@ export const Fireworks: React.FC<FireworksProps> = ({ isSoundEnabled }) => {
               particles.push(p);
             }
             break;
+
           case 'sphere':
           default:
             for (let i = 0; i < baseCount; i++) {
@@ -192,14 +183,16 @@ export const Fireworks: React.FC<FireworksProps> = ({ isSoundEnabled }) => {
 
         ctx.save();
         ctx.globalAlpha = this.alpha;
-        ctx.beginPath();
         const size = Math.random() * 1.5 + 1.5;
+        ctx.beginPath();
         ctx.arc(this.x, this.y, size, 0, Math.PI * 2);
         ctx.fillStyle = this.color;
+
         if (this.alpha > 0.5) {
           ctx.shadowBlur = 5;
           ctx.shadowColor = this.color;
         }
+
         ctx.fill();
         ctx.restore();
       }
@@ -232,17 +225,25 @@ export const Fireworks: React.FC<FireworksProps> = ({ isSoundEnabled }) => {
       animationId = requestAnimationFrame(animate);
     };
 
+    const handleResize = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+    };
+
+    window.addEventListener('resize', handleResize);
     animate();
 
     return () => {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationId);
-      ctxRef.current = null;
     };
   }, [isSoundEnabled]);
 
   return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-0" />;
 };
+
 
 
 
