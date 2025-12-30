@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { useTimezoneTimer } from './hooks/useTimezoneTimer';
 import { TimerDisplay } from './components/TimerDisplay';
 import { Controls } from './components/Controls';
@@ -141,6 +142,9 @@ const App: React.FC = () => {
       <footer className={`absolute bottom-8 left-8 text-slate-600 text-xs transition-opacity duration-500 block ${isFullScreen ? 'opacity-30' : 'opacity-100'}`}>
         <p>&copy; {new Date().getFullYear()} Meetcross Ministry</p>
       </footer>
+
+      {/* Vercel Web Analytics */}
+      <Analytics />
     </div>
   );
 };
