@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { useTimezoneTimer } from './hooks/useTimezoneTimer';
 import { TimerDisplay } from './components/TimerDisplay';
 import { Controls } from './components/Controls';
@@ -72,6 +73,7 @@ const App: React.FC = () => {
       ref={appRef}
       className={`min-h-screen w-full flex flex-col items-center justify-center relative bg-slate-950 overflow-hidden transition-all duration-500`}
     >
+      <Analytics />
       {/* Background Ambience */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-900/20 rounded-full blur-[120px] animate-pulse" />
