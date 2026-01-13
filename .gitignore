@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.pnpm/
+.pnp
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.turbo/
+
+# Cache and runtime
+.vercel/
+.cache/
+.parcel-cache/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
